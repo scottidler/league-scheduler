@@ -1,0 +1,27 @@
+conference-count: 2
+division-count: 4
+team-count: 16
+week-count: 8
+nights-per-week: 3
+games-per-night: 3
+own-div-series-home-away: 4
+other-div-series-home-away: 2
+#league:
+#  Northwest:
+#    North:
+#    - montreal
+#    - winnepeg
+#    - minnesota
+#    West:
+#    - colorado
+#    - sanjose
+#    - anaheim
+#  Southeast:
+#    South:
+#    - tampabay
+#    - florida
+#    - carolina
+#    East:
+#    - washington
+#    - pittsburgh
+#    - toronto
