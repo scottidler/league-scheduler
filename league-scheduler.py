@@ -20,7 +20,9 @@ REL = os.path.relpath(DIR, CWD)
 
 NAME, EXT = os.path.splitext(REAL_NAME)
 
+from random import seed, randint
 from ruamel import yaml
+from copy import deepcopy
 from itertools import chain, product
 from leatherman.dbg import dbg
 from leatherman.repr import __repr__
@@ -79,9 +81,32 @@ def percentage(num, msg='num should be 0-100'):
 def divides_evenly(num, den):
     return num % den == 0
 
+def league_fmt(obj):
+    if isinstance(obj, dict):
+        return {
+            key: league_fmt(value)
+            for key, value
+            in obj.items()
+        }
+    if isinstance(obj, list):
+        return [
+            league_fmt(item)
+            for item
+            in obj
+        ]
+    if isinstance(obj, tuple):
+        away, home = obj
+        return f'{away} @ {home}'
+    raise Exception(f'type(obj)={type(obj)}')
+
+def league_print(obj, title=None):
+    output = deepcopy({title: obj} if title else obj)
+    yaml_print(league_fmt(output))
+
 class Scheduler:
     def __init__(
         self,
+        random_seed,
         conference_count,
         division_count,
         team_count,
@@ -93,6 +118,7 @@ class Scheduler:
         league=None,
         **kwargs):
 
+        self.random_seed = random_seed
         self.conference_count = conference_count
         self.division_count = division_count
         self.team_count = team_count
@@ -103,7 +129,19 @@ class Scheduler:
         self.other_div_series_home_away = other_div_series_home_away
         self.league = league or self.create_league()
         self.matchups = []
-        self.schedule = {}
+        self.schedule = {
+            f'Week{w+1}': {
+                f'Night{n+1}': {
+                    f'Game{g+1}' : []
+                    for g
+                    in range(self.games_per_night)
+                }
+                for n
+                in range(self.nights_per_week)
+            }
+            for w
+            in range(self.week_count)
+        }
 
     __repr__ = __repr__
 
@@ -299,7 +337,7 @@ class Scheduler:
                     in product(teams, teams)
                     if matchup[0] != matchup[1]
                 ]
-        return sort_home_away(matchups) * self.own_div_series_home_away
+        return self.matchupsify(matchups * self.own_div_series_home_away)
 
     def create_other_div_matchups(self):
         matchups = []
@@ -307,7 +345,7 @@ class Scheduler:
             own_teams = self.get_own_div_teams(d)
             other_teams = self.get_other_divs_teams(d)
             matchups += product(own_teams, other_teams)
-        return sort_home_away(matchups) * self.other_div_series_home_away
+        return self.matchupsify(matchups * self.other_div_series_home_away)
 
     def create_other_conf_matchups(self, home_away):
         decimal, integer = math.modf(home_away); integer = int(integer)
@@ -332,44 +370,87 @@ class Scheduler:
                 ]
                 counter[away] += 1
                 counter[home] += 1
-        return matchups
+        return self.matchupsify(matchups)
 
-    def create_matchups(self):
-        own_div = self.create_own_div_matchups()
-        other_div = self.create_other_div_matchups()
-
-        home_away = self.total_games_other_conf / self.matchups_other_conf_home_away
-        other_conf = self.create_other_conf_matchups(home_away)
-        matchups = len(own_div) + len(other_div) + len(other_conf)
-        dbg(matchups)
-
-    def create_week(self):
-        pass
-
-    def create_night(self):
-        pass
-
-    def create_game(self, game):
-        return {
-            f'Game{game}': [
-                'A @ B',
-            ] * self.team_count / 2
-        }
+    def matchupsify(self, matchups):
+        count = len(matchups) // (len(self.teams) // 2)
+        results = []
+        for i in range(count):
+            results += [[]]
+            teams = deepcopy(self.teams)
+            j = 0
+            while teams:
+                away, home = matchups[j]
+                if away in teams and home in teams:
+                    teams = list(set(teams) - set([away, home]))
+                    results[i] += [(away, home)]
+                    matchups.pop(j)
+                else:
+                    j += 1
+        return results
 
     def create_schedule(self):
-        self.schedule = {
-            f'Week{w+1}': {
-                f'Night{n+1}': {
-                    f'Game{g+1}' : []
-                    for g
-                    in range(self.games_per_night)
-                }
-                for n
-                in range(self.nights_per_week)
-            }
-            for w
-            in range(self.week_count)
-        }
+        home_away = self.total_games_other_conf / self.matchups_other_conf_home_away
+        other_conf = self.create_other_conf_matchups(home_away)
+        other_div = self.create_other_div_matchups()
+        own_div = self.create_own_div_matchups()
+
+        self.create_own_div_opening_week_schedule(own_div, other_div)
+        self.create_other_2nd_week_schedule(other_div, other_conf)
+        self.create_other_conf_cup_preview_schedule(other_conf)
+        self.create_last_2wks_div_push_schedule(own_div, other_div)
+        self.create_random_middle_schedule(own_div, other_div, other_conf)
+        league_print(self.schedule)
+
+    def build_time_slot(self, week, night, game, matchups):
+        '''
+        week, night and game are expected to be zero-based; therefore +1 to each to be one-based
+        '''
+        self.schedule[f'Week{week+1}'][f'Night{night+1}'][f'Game{game+1}'] = matchups
+
+    def create_own_div_opening_week_schedule(self, own_div, other_div):
+        for n in range(self.nights_per_week):
+            for g in range(self.games_per_night):
+                if g % 2:
+                    self.build_time_slot(0, n, g, other_div.pop(0))
+                else:
+                    self.build_time_slot(0, n, g, own_div.pop(0))
+
+    def create_other_2nd_week_schedule(self, other_div, other_conf):
+        for n in range(self.nights_per_week):
+            for g in range(self.games_per_night):
+                if g % 2:
+                    self.build_time_slot(1, n, g, other_conf.pop(0))
+                else:
+                    self.build_time_slot(1, n, g, other_div.pop(0))
+
+    def create_random_middle_schedule(self, *matchups_list):
+        if self.random_seed:
+            seed(self.random_seed)
+        for w in range(2, 5):
+            for n in range(self.nights_per_week):
+                for g in range(self.games_per_night):
+                    matchups = None
+                    while matchups is None:
+                        r = randint(0, len(matchups_list)-1)
+                        if len(matchups_list[r]):
+                            matchups = matchups_list[r].pop(0)
+                    self.build_time_slot(w, n, g, matchups)
+
+    def create_other_conf_cup_preview_schedule(self, other_conf):
+        third_to_last_week = self.week_count - 3
+        for n in range(self.nights_per_week):
+            for g in range(self.games_per_night):
+                self.build_time_slot(third_to_last_week, n, g, other_conf.pop(0))
+
+    def create_last_2wks_div_push_schedule(self, own_div, other_div):
+        for w in range(self.week_count - 2, self.week_count):
+            for n in range(self.nights_per_week):
+                for g in range(self.games_per_night):
+                    if g % 2:
+                        self.build_time_slot(w, n, g, other_div.pop(0))
+                    else:
+                        self.build_time_slot(w, n, g, own_div.pop(0))
 
 def main(args=None):
     parser = ArgumentParser(
@@ -390,11 +471,14 @@ def main(args=None):
         }
     except FileNotFoundError as er:
         config = dict()
-    #finally:
-    #    config = resolve(config)
     parser = ArgumentParser(
         parents=[parser])
     parser.set_defaults(**config)
+    parser.add_argument(
+        '--random-seed',
+        metavar='INT',
+        type=int,
+        help='default="%(default)s"; set random seed')
     parser.add_argument(
         '--conference-count',
         metavar='INT',
@@ -437,7 +521,6 @@ def main(args=None):
         help='default="%(default)s"; other div home|away count')
     ns = parser.parse_args(rem)
     s = Scheduler(**ns.__dict__)
-    s.create_matchups()
     s.create_schedule()
     s.print_stats()
 
