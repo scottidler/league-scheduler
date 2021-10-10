@@ -337,7 +337,7 @@ class Scheduler:
                     in product(teams, teams)
                     if matchup[0] != matchup[1]
                 ]
-        return self.matchupsify(matchups * self.own_div_series_home_away)
+        return self.bundle_matchups(matchups * self.own_div_series_home_away)
 
     def create_other_div_matchups(self):
         matchups = []
@@ -345,7 +345,7 @@ class Scheduler:
             own_teams = self.get_own_div_teams(d)
             other_teams = self.get_other_divs_teams(d)
             matchups += product(own_teams, other_teams)
-        return self.matchupsify(matchups * self.other_div_series_home_away)
+        return self.bundle_matchups(matchups * self.other_div_series_home_away)
 
     def create_other_conf_matchups(self, home_away):
         decimal, integer = math.modf(home_away); integer = int(integer)
@@ -370,9 +370,12 @@ class Scheduler:
                 ]
                 counter[away] += 1
                 counter[home] += 1
-        return self.matchupsify(matchups)
+        return self.bundle_matchups(matchups)
 
-    def matchupsify(self, matchups):
+    def bundle_matchups(self, matchups):
+        '''
+        bundle list of matchups into list of lists bundles for game times
+        '''
         count = len(matchups) // (len(self.teams) // 2)
         results = []
         for i in range(count):
