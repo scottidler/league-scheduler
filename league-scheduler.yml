@@ -7,22 +7,23 @@ nights-per-week: 3
 games-per-night: 3
 own-div-series-home-away: 4
 other-div-series-home-away: 3
+
 #league:
 #  Northwest:
 #    North:
-#    - montreal
-#    - winnepeg
-#    - minnesota
+#    - Calgary Flames
+#    - Minnesota Wild
+#    - Edmonton Oilers
 #    West:
-#    - colorado
-#    - sanjose
-#    - anaheim
+#    - Los Angeles Kings
+#    - Seattle Kraken
+#    - Vancouver Canucks
 #  Southeast:
 #    South:
-#    - tampabay
-#    - florida
-#    - carolina
+#    - Tampa Bay Lightning
+#    - Florida Panthers
+#    - Atlanta Thrashers
 #    East:
-#    - washington
-#    - pittsburgh
-#    - toronto
+#    - New York Rangers
+#    - Carolina Hurricanes
+#    - Boston Bruins
