@@ -7,23 +7,36 @@ nights-per-week: 3
 games-per-night: 3
 own-div-series-home-away: 4
 other-div-series-home-away: 3
+start-date: November 5th, 2021
+nights:
+- Saturday
+- Sunday
+- Monday
+games:
+- 7:30pm Pacific
+- 8:15pm Pacific
+- 9:00pm Pacific
 
-#league:
-#  Northwest:
-#    North:
-#    - Calgary Flames
-#    - Minnesota Wild
-#    - Edmonton Oilers
-#    West:
-#    - Los Angeles Kings
-#    - Seattle Kraken
-#    - Vancouver Canucks
-#  Southeast:
-#    South:
-#    - Tampa Bay Lightning
-#    - Florida Panthers
-#    - Atlanta Thrashers
-#    East:
-#    - New York Rangers
-#    - Carolina Hurricanes
-#    - Boston Bruins
+league:
+  Northwest:
+    North:
+    - Calgary Flames (christiano|lowjack)
+    - Edmonton Oilers (7eighty|rooster)
+    - Quebec Nordiques (toews|tbd)
+    - Winnipeg Jets (thisguy|bighurt)
+    West:
+    - Anaheim Ducks (oil|mryim)
+    - Los Angeles Kings (envvy|mozman)
+    - Seattle Kraken (wertsy|newfie)
+    - Vancouver Canucks (sure|gato)
+  Southeast:
+    South:
+    - Atlanta Thrashers (bonezy|senko)
+    - Carolina Hurricanes (swayzee|pq)
+    - Florida Panthers (gold|zoned)
+    - Tampa Bay Lightning (muttley|jimi)
+    East:
+    - Chicago Blackhawks (beatu|aidan)
+    - Philadelphia Flyers (ripo|buds)
+    - New York Islanders (virus|harrap)
+    - New York Rangers (rantanen|carlson)
