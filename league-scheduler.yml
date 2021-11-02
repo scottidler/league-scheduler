@@ -9,9 +9,9 @@ own-div-series-home-away: 4
 other-div-series-home-away: 3
 start-date: November 5th, 2021
 nights:
-- Saturday
 - Sunday
 - Monday
+- Tuesday
 games:
 - 7:30pm Pacific
 - 8:15pm Pacific
