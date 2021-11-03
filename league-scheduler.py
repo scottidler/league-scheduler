@@ -25,11 +25,13 @@ from ruamel import yaml
 from copy import deepcopy
 from addict import Addict
 from itertools import chain, product
+from datetime import datetime, timedelta
 from leatherman.dbg import dbg
 from leatherman.repr import __repr__
 from leatherman.yaml import yaml_format, yaml_print
 from argparse import ArgumentParser, RawDescriptionHelpFormatter, Action
 
+DATE_FORMAT = '%A %B %d, %Y'
 
 class PercentageError(Exception):
     def __init__(self, value):
@@ -116,6 +118,7 @@ class Scheduler:
         week_count,
         nights_per_week,
         games_per_night,
+        start_date,
         own_div_series_home_away,
         other_div_series_home_away,
         nights,
@@ -130,6 +133,7 @@ class Scheduler:
         self.week_count = week_count
         self.nights_per_week = nights_per_week
         self.games_per_night = games_per_night
+        self.start_date = datetime.strptime(start_date, DATE_FORMAT)
         self.own_div_series_home_away = own_div_series_home_away
         self.other_div_series_home_away = other_div_series_home_away
         self.nights = nights
@@ -281,6 +285,10 @@ class Scheduler:
         div_teams = self.get_own_div_teams(div)
         return list_sub(conf_teams, div_teams)
 
+    def date(self, week, night):
+        result = self.start_date + timedelta(weeks=week) + timedelta(days=night)
+        return result.strftime(DATE_FORMAT)
+
     def matchup_filter(self, team):
         return [
             matchup
@@ -290,6 +298,7 @@ class Scheduler:
         ]
 
     def print_stats(self):
+        print(f'start-date: {self.start_date}')
         print(f'total-games: {self.total_games}')
         print(f'total_matchups: {self.total_matchups}')
         print(f'div-per-conf: {self.divs_per_conf}')
@@ -404,7 +413,7 @@ class Scheduler:
         '''
         week, night and game are expected to be zero-based; therefore +1 to each to be one-based
         '''
-        self.schedule[f'Week{week+1}'][f'Night{night+1} ({self.nights[night]})'][f'Game{game+1} ({self.games[game]})'] = {
+        self.schedule[f'Week{week+1}'][f'Night{night+1} ({self.date(week, night)})'][f'Game{game+1} ({self.games[game]})'] = {
             'label': label,
             'matchups': matchups,
         }
